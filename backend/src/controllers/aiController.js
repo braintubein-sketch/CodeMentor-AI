@@ -21,8 +21,8 @@ function getGenAI() {
   return genAI;
 }
 
-// Models to try in order (fallback chain)
-const MODEL_CHAIN = ['gemini-2.0-flash', 'gemini-1.5-flash'];
+// Models to try in order (fallback chain) — verified model names
+const MODEL_CHAIN = ['gemini-2.0-flash', 'gemini-2.0-flash-lite'];
 
 // Valid actions the user can request
 const VALID_ACTIONS = ['explain', 'debug', 'optimize', 'convert'];
@@ -31,7 +31,7 @@ const VALID_ACTIONS = ['explain', 'debug', 'optimize', 'convert'];
  * Check if an error is a rate-limit / quota error
  */
 function isRateLimitError(err) {
-  const msg = err.message || '';
+  const msg = (err.message || '') + (err.statusText || '');
   return (
     msg.includes('429') ||
     msg.includes('quota') ||
@@ -41,6 +41,11 @@ function isRateLimitError(err) {
     err.status === 429
   );
 }
+
+/**
+ * Sleep for ms
+ */
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
  * Call Gemini with automatic retry + model fallback.
@@ -53,7 +58,7 @@ async function callGemini(promptText) {
   for (const modelName of MODEL_CHAIN) {
     const model = ai.getGenerativeModel({ model: modelName });
 
-    // Try up to 3 times per model with exponential backoff
+    // Try up to 3 times per model with longer backoff
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         console.log(`🤖 Trying ${modelName} (attempt ${attempt + 1}/3)...`);
@@ -69,16 +74,24 @@ async function callGemini(promptText) {
             temperature: 0.3,
           },
         });
+        console.log(`✅ ${modelName} succeeded!`);
         return result.response.text();
       } catch (err) {
         lastError = err;
+
+        // If model not found (404), skip to next model immediately
+        if (err.status === 404 || err.message?.includes('not found')) {
+          console.log(`❌ ${modelName} not available, skipping...`);
+          break;
+        }
+
         if (isRateLimitError(err)) {
-          // Exponential backoff: 2s, 4s, 8s
-          const delay = Math.pow(2, attempt + 1) * 1000;
+          // Longer backoff: 5s, 15s, 30s
+          const delay = [5000, 15000, 30000][attempt] || 30000;
           console.log(`⏳ Rate limited on ${modelName}. Waiting ${delay / 1000}s...`);
-          await new Promise((r) => setTimeout(r, delay));
+          await sleep(delay);
         } else {
-          throw err; // Non-retryable error — throw immediately
+          throw err; // Non-retryable error
         }
       }
     }
@@ -92,8 +105,6 @@ async function callGemini(promptText) {
 /**
  * POST /api/ai
  * Process code with AI based on the selected action.
- *
- * Body: { code: string, language: string, action: string }
  */
 exports.processCode = async (req, res) => {
   try {
@@ -143,7 +154,7 @@ exports.processCode = async (req, res) => {
 
     if (isRateLimitError(err)) {
       return res.status(429).json({
-        error: 'AI is temporarily busy. Please wait 30 seconds and try again.',
+        error: 'AI is temporarily busy. Please wait about 30 seconds and try again.',
       });
     }
 

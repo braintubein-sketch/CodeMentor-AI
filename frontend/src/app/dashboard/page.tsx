@@ -76,8 +76,8 @@ export default function DashboardPage() {
 
       {/* Toolbar */}
       <div className="border-b border-white/5 bg-dark-950/80 backdrop-blur-sm sticky top-16 z-40">
-        <div className="max-w-[1800px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3 overflow-x-auto">
-          <div className="flex items-center gap-2 sm:gap-3 min-w-max">
+        <div className="max-w-[1800px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
             {/* Language dropdown */}
             <div className="relative">
               <button onClick={() => setDropdownOpen(!dropdownOpen)}
