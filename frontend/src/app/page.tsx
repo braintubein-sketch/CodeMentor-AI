@@ -49,43 +49,43 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* ── Background Effects ──────────────── */}
-      <div className="orb w-[600px] h-[600px] bg-accent-blue top-[-200px] left-[-200px]" />
-      <div className="orb w-[500px] h-[500px] bg-accent-purple bottom-[-150px] right-[-150px]" />
-      <div className="orb w-[300px] h-[300px] bg-accent-cyan top-[40%] left-[60%]" />
+      <div className="orb w-[300px] sm:w-[600px] h-[300px] sm:h-[600px] bg-accent-blue top-[-100px] sm:top-[-200px] left-[-100px] sm:left-[-200px]" />
+      <div className="orb w-[250px] sm:w-[500px] h-[250px] sm:h-[500px] bg-accent-purple bottom-[-100px] sm:bottom-[-150px] right-[-100px] sm:right-[-150px]" />
+      <div className="orb w-[200px] sm:w-[300px] h-[200px] sm:h-[300px] bg-accent-cyan top-[40%] left-[60%]" />
 
       {/* ── Header ─────────────────────────── */}
-      <header className="relative z-10 flex items-center justify-between max-w-7xl mx-auto px-6 py-6">
+      <header className="relative z-10 flex items-center justify-between max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex items-center gap-2">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center shadow-glow-sm">
-            <span className="text-white font-bold text-sm">&lt;/&gt;</span>
+          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-accent-blue to-accent-purple flex items-center justify-center shadow-glow-sm">
+            <span className="text-white font-bold text-xs sm:text-sm">&lt;/&gt;</span>
           </div>
-          <span className="text-xl font-bold gradient-text">CodeMentor AI</span>
+          <span className="text-lg sm:text-xl font-bold gradient-text">CodeMentor AI</span>
         </div>
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="btn-ghost text-sm !px-5 !py-2.5">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Link href="/login" className="btn-ghost text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
             Log In
           </Link>
-          <Link href="/signup" className="btn-primary text-sm !px-5 !py-2.5">
+          <Link href="/signup" className="btn-primary text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
             Get Started
           </Link>
         </div>
       </header>
 
       {/* ── Hero Section ───────────────────── */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-16 pb-24">
-        <div className="text-center max-w-3xl mx-auto mb-20">
+      <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 pt-10 sm:pt-16 pb-16 sm:pb-24">
+        <div className="text-center max-w-3xl mx-auto mb-12 sm:mb-20">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-blue/10 border border-accent-blue/20 text-accent-blue text-xs font-medium mb-8 animate-fade-in">
             <HiOutlineLightningBolt className="w-3.5 h-3.5" />
             Powered by AI
           </div>
 
-          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold leading-tight mb-6 animate-slide-up">
+          <h1 className="text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight mb-4 sm:mb-6 animate-slide-up">
             Your AI-Powered{' '}
             <span className="gradient-text">Code Mentor</span>
           </h1>
 
-          <p className="text-lg sm:text-xl text-white/50 leading-relaxed mb-10 text-balance animate-slide-up" style={{ animationDelay: '0.1s' }}>
+          <p className="text-sm sm:text-lg md:text-xl text-white/50 leading-relaxed mb-8 sm:mb-10 text-balance animate-slide-up" style={{ animationDelay: '0.1s' }}>
             Explain, debug, optimize, and convert your code instantly. 
             Paste any snippet and let artificial intelligence elevate your development workflow.
           </p>
@@ -123,7 +123,7 @@ export default function LandingPage() {
         </div>
 
         {/* ── Code Preview Mockup ──────────── */}
-        <div className="mt-20 animate-slide-up" style={{ animationDelay: '0.7s' }}>
+        <div className="mt-12 sm:mt-20 animate-slide-up hidden sm:block" style={{ animationDelay: '0.7s' }}>
           <div className="glass rounded-2xl overflow-hidden shadow-glass max-w-4xl mx-auto">
             {/* Title bar */}
             <div className="flex items-center gap-2 px-5 py-3 bg-dark-900/60 border-b border-white/5">
@@ -135,7 +135,7 @@ export default function LandingPage() {
               <span className="text-xs text-white/20 ml-2 font-mono">dashboard.tsx</span>
             </div>
             {/* Code content */}
-            <div className="p-6 font-mono text-sm leading-relaxed">
+            <div className="p-4 sm:p-6 font-mono text-xs sm:text-sm leading-relaxed overflow-x-auto">
               <div className="text-white/20">
                 <span className="text-purple-400">const</span>{' '}
                 <span className="text-blue-400">result</span>{' '}
@@ -183,7 +183,7 @@ export default function LandingPage() {
           <div className="flex gap-6">
             <span>Next.js</span>
             <span>Express</span>
-            <span>OpenAI</span>
+            <span>Gemini</span>
             <span>Prisma</span>
           </div>
         </div>

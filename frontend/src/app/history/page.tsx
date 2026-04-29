@@ -67,11 +67,11 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen flex flex-col bg-dark-950">
       <Navbar />
-      <div className="flex-1 max-w-7xl mx-auto w-full px-4 py-8">
-        <div className="flex items-center justify-between mb-8">
+      <div className="flex-1 max-w-7xl mx-auto w-full px-3 sm:px-4 py-5 sm:py-8">
+        <div className="flex items-center justify-between mb-5 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-white">Query History</h1>
-            <p className="text-sm text-white/40 mt-1">Your past code analysis queries</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">Query History</h1>
+            <p className="text-xs sm:text-sm text-white/40 mt-1">Your past code analysis queries</p>
           </div>
           <div className="flex items-center gap-2 text-xs text-white/30">
             <HiOutlineCode className="w-4 h-4" />
@@ -95,10 +95,10 @@ export default function HistoryPage() {
                 const meta = ACTION_LABELS[query.action] || ACTION_LABELS.explain;
                 return (
                   <div key={query.id}
-                    className="glass rounded-2xl p-5 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer group hover:-translate-y-0.5"
+                    className="glass rounded-2xl p-4 sm:p-5 hover:bg-white/[0.02] transition-all duration-300 cursor-pointer group active:scale-[0.98] sm:hover:-translate-y-0.5"
                     onClick={() => setSelectedQuery(query)}>
                     <div className="flex items-center justify-between mb-3">
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${meta.color}`}>
+                      <span className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium border ${meta.color}`}>
                         <span>{meta.icon}</span> {meta.label}
                       </span>
                       <span className="text-[10px] text-white/20">{new Date(query.createdAt).toLocaleDateString()}</span>
@@ -106,12 +106,12 @@ export default function HistoryPage() {
                     <div className="mb-3">
                       <span className="text-xs text-white/30 uppercase tracking-wider">{query.language}</span>
                     </div>
-                    <pre className="text-xs text-white/40 font-mono bg-dark-900/50 rounded-xl p-3 overflow-hidden max-h-[80px] mb-3">
-                      {query.code.slice(0, 150)}{query.code.length > 150 ? '...' : ''}
+                    <pre className="text-[11px] sm:text-xs text-white/40 font-mono bg-dark-900/50 rounded-xl p-2.5 sm:p-3 overflow-hidden max-h-[70px] sm:max-h-[80px] mb-3">
+                      {query.code.slice(0, 120)}{query.code.length > 120 ? '...' : ''}
                     </pre>
                     <div className="flex items-center justify-between">
                       <span className="text-[10px] text-white/15">{new Date(query.createdAt).toLocaleTimeString()}</span>
-                      <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                         <button onClick={(e) => { e.stopPropagation(); handleCopy(query.response, query.id); }}
                           className="p-1.5 rounded-lg hover:bg-white/5 text-white/30 hover:text-white/60 transition-all">
                           {copiedId === query.id ? <HiOutlineCheck className="w-3.5 h-3.5 text-green-400" /> : <HiOutlineClipboardCopy className="w-3.5 h-3.5" />}
@@ -144,11 +144,11 @@ export default function HistoryPage() {
 
       {/* Detail modal */}
       {selectedQuery && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedQuery(null)}>
-          <div className="glass-strong rounded-2xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-glass animate-slide-up" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-              <div className="flex items-center gap-3">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border ${ACTION_LABELS[selectedQuery.action]?.color}`}>
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedQuery(null)}>
+          <div className="glass-strong rounded-t-2xl sm:rounded-2xl w-full sm:max-w-3xl max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-glass animate-slide-up" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 border-b border-white/5">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <span className={`inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium border ${ACTION_LABELS[selectedQuery.action]?.color}`}>
                   {ACTION_LABELS[selectedQuery.action]?.icon} {ACTION_LABELS[selectedQuery.action]?.label}
                 </span>
                 <span className="text-xs text-white/30">{selectedQuery.language}</span>
@@ -157,14 +157,14 @@ export default function HistoryPage() {
                 <HiOutlineX className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
               <div>
                 <h4 className="text-xs text-white/30 uppercase tracking-wider mb-2">Input Code</h4>
-                <pre className="text-sm text-white/60 font-mono bg-dark-950 rounded-xl p-4 overflow-x-auto">{selectedQuery.code}</pre>
+                <pre className="text-xs sm:text-sm text-white/60 font-mono bg-dark-950 rounded-xl p-3 sm:p-4 overflow-x-auto">{selectedQuery.code}</pre>
               </div>
               <div>
                 <h4 className="text-xs text-white/30 uppercase tracking-wider mb-2">AI Response</h4>
-                <div className="ai-response bg-dark-950 rounded-xl p-4">
+                <div className="ai-response bg-dark-950 rounded-xl p-3 sm:p-4">
                   <ReactMarkdown remarkPlugins={[remarkGfm]}>{selectedQuery.response}</ReactMarkdown>
                 </div>
               </div>
