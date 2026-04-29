@@ -1,24 +1,24 @@
 // ============================================
-// CodeMentor AI — AI Processing Controller
+// CodeMentor AI — AI Processing Controller (Gemini)
 // ============================================
 
-const OpenAI = require('openai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 const { PrismaClient } = require('@prisma/client');
 const { generatePrompt } = require('../utils/generatePrompt');
 
 const prisma = new PrismaClient();
 
-// Lazy-initialized OpenAI client (avoids crash if API key is missing at startup)
-let openai = null;
+// Lazy-initialized Gemini client (avoids crash if API key is missing at startup)
+let genAI = null;
 
-function getOpenAIClient() {
-  if (!openai) {
-    if (!process.env.OPENAI_API_KEY) {
-      throw new Error('OPENAI_API_KEY environment variable is not set.');
+function getGeminiModel() {
+  if (!genAI) {
+    if (!process.env.GEMINI_API_KEY) {
+      throw new Error('GEMINI_API_KEY environment variable is not set.');
     }
-    openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+    genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
-  return openai;
+  return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 }
 
 // Valid actions the user can request
@@ -48,27 +48,33 @@ exports.processCode = async (req, res) => {
       });
     }
 
-    // ── Build Prompt & Call OpenAI ────────────
+    // ── Build Prompt & Call Gemini ─────────────
     const prompt = generatePrompt(code, language, action);
+    const model = getGeminiModel();
 
-    const completion = await getOpenAIClient().chat.completions.create({
-      model: 'gpt-4',
-      messages: [
+    const result = await model.generateContent({
+      contents: [
         {
-          role: 'system',
-          content:
-            'You are CodeMentor AI, an expert programming assistant. ' +
-            'Provide clear, well-structured, and actionable responses. ' +
-            'Use markdown formatting with code blocks, headings, and bullet points. ' +
-            'Be thorough but concise.',
+          role: 'user',
+          parts: [
+            {
+              text:
+                'You are CodeMentor AI, an expert programming assistant. ' +
+                'Provide clear, well-structured, and actionable responses. ' +
+                'Use markdown formatting with code blocks, headings, and bullet points. ' +
+                'Be thorough but concise.\n\n' +
+                prompt,
+            },
+          ],
         },
-        { role: 'user', content: prompt },
       ],
-      max_tokens: 2048,
-      temperature: 0.3,
+      generationConfig: {
+        maxOutputTokens: 2048,
+        temperature: 0.3,
+      },
     });
 
-    const response = completion.choices[0].message.content;
+    const response = result.response.text();
 
     // ── Persist Query to Database ─────────────
     const query = await prisma.query.create({
@@ -82,16 +88,16 @@ exports.processCode = async (req, res) => {
   } catch (err) {
     console.error('AI processing error:', err);
 
-    // Handle specific OpenAI errors
-    if (err?.status === 429 || err?.code === 'insufficient_quota') {
-      return res.status(429).json({
-        error: 'API rate limit reached. Please try again in a moment.',
+    // Handle specific Gemini errors
+    if (err.message?.includes('API key')) {
+      return res.status(500).json({
+        error: 'AI service authentication failed. Check your GEMINI_API_KEY.',
       });
     }
 
-    if (err?.status === 401) {
-      return res.status(500).json({
-        error: 'AI service authentication failed. Check your API key.',
+    if (err.message?.includes('quota') || err.message?.includes('rate')) {
+      return res.status(429).json({
+        error: 'API rate limit reached. Please try again in a moment.',
       });
     }
 
