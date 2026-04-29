@@ -33,7 +33,6 @@ const VALID_ACTIONS = ['explain', 'debug', 'optimize', 'convert'];
 exports.processCode = async (req, res) => {
   try {
     const { code, language, action } = req.body;
-    const userId = req.user.userId;
 
     // ── Input Validation ──────────────────────
     if (!code || !language || !action) {
@@ -78,7 +77,7 @@ exports.processCode = async (req, res) => {
 
     // ── Persist Query to Database ─────────────
     const query = await prisma.query.create({
-      data: { code, language, action, response, userId },
+      data: { code, language, action, response },
     });
 
     res.json({

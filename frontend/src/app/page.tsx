@@ -6,7 +6,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { HiOutlineLightningBolt, HiOutlineCode, HiOutlineShieldCheck, HiOutlineClock } from 'react-icons/hi';
 
@@ -38,13 +37,7 @@ const FEATURES = [
 ];
 
 export default function LandingPage() {
-  const { isAuthenticated } = useAuth();
   const router = useRouter();
-
-  // Redirect authenticated users to dashboard
-  React.useEffect(() => {
-    if (isAuthenticated) router.push('/dashboard');
-  }, [isAuthenticated, router]);
 
   return (
     <div className="min-h-screen relative overflow-hidden">
@@ -62,11 +55,8 @@ export default function LandingPage() {
           <span className="text-lg sm:text-xl font-bold gradient-text">CodeMentor AI</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/login" className="btn-ghost text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
-            Log In
-          </Link>
-          <Link href="/signup" className="btn-primary text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
-            Get Started
+          <Link href="/dashboard" className="btn-primary text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
+            Dashboard
           </Link>
         </div>
       </header>
@@ -91,11 +81,8 @@ export default function LandingPage() {
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-slide-up" style={{ animationDelay: '0.2s' }}>
-            <Link href="/signup" className="btn-primary text-base !px-8 !py-4 w-full sm:w-auto">
-              Start Coding — Free
-            </Link>
-            <Link href="/login" className="btn-ghost text-base !px-8 !py-4 w-full sm:w-auto">
-              I have an account
+            <Link href="/dashboard" className="btn-primary text-base !px-8 !py-4 w-full sm:w-auto">
+              Start Coding
             </Link>
           </div>
         </div>

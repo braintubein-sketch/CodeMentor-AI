@@ -32,9 +32,7 @@ export default function DashboardPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'response'>('editor');
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) router.push('/login');
-  }, [isAuthenticated, authLoading, router]);
+  // No auth required
 
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang);
@@ -63,15 +61,7 @@ export default function DashboardPage() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <LoadingSpinner size="lg" text="Loading..." />
-      </div>
-    );
-  }
-
-  if (!isAuthenticated) return null;
+  // Auth removed
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950">

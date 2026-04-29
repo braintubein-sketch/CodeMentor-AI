@@ -32,14 +32,6 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401 && typeof window !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      // Redirect to login on auth failure (except for login/signup pages)
-      if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/signup')) {
-        window.location.href = '/login';
-      }
-    }
     return Promise.reject(error);
   }
 );

@@ -29,9 +29,7 @@ export default function HistoryPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) router.push('/login');
-  }, [isAuthenticated, authLoading, router]);
+  // No auth required
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -43,7 +41,7 @@ export default function HistoryPage() {
     finally { setLoading(false); }
   }, [page]);
 
-  useEffect(() => { if (isAuthenticated) fetchHistory(); }, [isAuthenticated, fetchHistory]);
+  useEffect(() => { fetchHistory(); }, [fetchHistory]);
 
   const handleDelete = async (id: string) => {
     try {
@@ -61,8 +59,7 @@ export default function HistoryPage() {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  if (authLoading) return <div className="min-h-screen flex items-center justify-center"><LoadingSpinner size="lg" /></div>;
-  if (!isAuthenticated) return null;
+  // Auth removed
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950">
