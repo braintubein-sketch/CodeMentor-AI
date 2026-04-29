@@ -6,7 +6,6 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { HiOutlineLightningBolt, HiOutlineCode, HiOutlineShieldCheck, HiOutlineClock } from 'react-icons/hi';
 
 const FEATURES = [
@@ -37,8 +36,6 @@ const FEATURES = [
 ];
 
 export default function LandingPage() {
-  const router = useRouter();
-
   return (
     <div className="min-h-screen relative overflow-hidden">
       {/* ── Background Effects ──────────────── */}
@@ -55,8 +52,11 @@ export default function LandingPage() {
           <span className="text-lg sm:text-xl font-bold gradient-text">CodeMentor AI</span>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          <Link href="/dashboard" className="btn-primary text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
-            Dashboard
+          <Link href="/login" className="px-3 sm:px-4 py-2 text-xs sm:text-sm text-white/60 hover:text-white transition-colors font-medium">
+            Login
+          </Link>
+          <Link href="/signup" className="btn-primary text-xs sm:text-sm !px-3 sm:!px-5 !py-2 sm:!py-2.5">
+            Sign Up Free
           </Link>
         </div>
       </header>

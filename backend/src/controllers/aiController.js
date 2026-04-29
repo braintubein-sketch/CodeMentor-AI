@@ -76,8 +76,10 @@ exports.processCode = async (req, res) => {
     const response = result.response.text();
 
     // ── Persist Query to Database ─────────────
+    // Link query to the authenticated user (if logged in)
+    const userId = req.user?.id || null;
     const query = await prisma.query.create({
-      data: { code, language, action, response },
+      data: { code, language, action, response, userId },
     });
 
     res.json({

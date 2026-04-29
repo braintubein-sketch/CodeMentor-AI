@@ -12,12 +12,14 @@ const prisma = new PrismaClient();
  */
 exports.getHistory = async (req, res) => {
   try {
+    const userId = req.user.id;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
     const [queries, total] = await Promise.all([
       prisma.query.findMany({
+        where: { userId },
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -30,7 +32,7 @@ exports.getHistory = async (req, res) => {
           createdAt: true,
         },
       }),
-      prisma.query.count(),
+      prisma.query.count({ where: { userId } }),
     ]);
 
     res.json({
@@ -55,9 +57,10 @@ exports.getHistory = async (req, res) => {
 exports.getQuery = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
     const query = await prisma.query.findFirst({
-      where: { id },
+      where: { id, userId },
     });
 
     if (!query) {
@@ -78,10 +81,11 @@ exports.getQuery = async (req, res) => {
 exports.deleteQuery = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
-    const query = await prisma.query.findFirst({ where: { id } });
+    const query = await prisma.query.findFirst({ where: { id, userId } });
     if (!query) {
-      return res.status(404).json({ error: 'Query not found.' });
+      return res.status(404).json({ error: 'Query not found or access denied.' });
     }
 
     await prisma.query.delete({ where: { id } });
