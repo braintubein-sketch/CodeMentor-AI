@@ -86,10 +86,10 @@ export default function DashboardPage() {
                 <HiOutlineChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ml-auto transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
               </button>
               {dropdownOpen && (
-                <div className="absolute top-full mt-1 w-full glass-strong rounded-xl shadow-glass overflow-hidden z-50 animate-slide-down">
+                <div className="absolute top-full mt-1 w-full rounded-xl shadow-2xl overflow-hidden z-50 animate-slide-down bg-dark-900 border border-white/15">
                   {LANGUAGES.map(lang => (
                     <button key={lang.value} onClick={() => handleLanguageChange(lang.value)}
-                      className={`w-full text-left px-3 sm:px-4 py-2 sm:py-2.5 text-xs sm:text-sm transition-all ${language === lang.value ? 'bg-accent-blue/15 text-accent-blue' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}>
+                      className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all ${language === lang.value ? 'bg-accent-blue/20 text-accent-blue' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}>
                       {lang.label}
                     </button>
                   ))}
