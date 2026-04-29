@@ -8,50 +8,85 @@ const { generatePrompt } = require('../utils/generatePrompt');
 
 const prisma = new PrismaClient();
 
-// Lazy-initialized Gemini client (avoids crash if API key is missing at startup)
+// Lazy-initialized Gemini client
 let genAI = null;
 
-function getGeminiModel() {
+function getGenAI() {
   if (!genAI) {
     if (!process.env.GEMINI_API_KEY) {
       throw new Error('GEMINI_API_KEY environment variable is not set.');
     }
     genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
   }
-  return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  return genAI;
 }
+
+// Models to try in order (fallback chain)
+const MODEL_CHAIN = ['gemini-2.0-flash', 'gemini-1.5-flash'];
 
 // Valid actions the user can request
 const VALID_ACTIONS = ['explain', 'debug', 'optimize', 'convert'];
 
 /**
- * Retry a function with exponential backoff.
- * Retries up to `maxRetries` times on rate-limit / transient errors.
+ * Check if an error is a rate-limit / quota error
  */
-async function withRetry(fn, maxRetries = 3) {
-  for (let attempt = 0; attempt <= maxRetries; attempt++) {
-    try {
-      return await fn();
-    } catch (err) {
-      const isRateLimit =
-        err.message?.includes('429') ||
-        err.message?.includes('quota') ||
-        err.message?.includes('rate') ||
-        err.message?.includes('Resource has been exhausted') ||
-        err.status === 429;
+function isRateLimitError(err) {
+  const msg = err.message || '';
+  return (
+    msg.includes('429') ||
+    msg.includes('quota') ||
+    msg.includes('rate') ||
+    msg.includes('Resource has been exhausted') ||
+    msg.includes('RESOURCE_EXHAUSTED') ||
+    err.status === 429
+  );
+}
 
-      const isLastAttempt = attempt === maxRetries;
+/**
+ * Call Gemini with automatic retry + model fallback.
+ * Tries each model in MODEL_CHAIN, with retries per model.
+ */
+async function callGemini(promptText) {
+  const ai = getGenAI();
+  let lastError = null;
 
-      if (!isRateLimit || isLastAttempt) {
-        throw err; // Not retryable or out of retries
+  for (const modelName of MODEL_CHAIN) {
+    const model = ai.getGenerativeModel({ model: modelName });
+
+    // Try up to 3 times per model with exponential backoff
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        console.log(`🤖 Trying ${modelName} (attempt ${attempt + 1}/3)...`);
+        const result = await model.generateContent({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: promptText }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: 2048,
+            temperature: 0.3,
+          },
+        });
+        return result.response.text();
+      } catch (err) {
+        lastError = err;
+        if (isRateLimitError(err)) {
+          // Exponential backoff: 2s, 4s, 8s
+          const delay = Math.pow(2, attempt + 1) * 1000;
+          console.log(`⏳ Rate limited on ${modelName}. Waiting ${delay / 1000}s...`);
+          await new Promise((r) => setTimeout(r, delay));
+        } else {
+          throw err; // Non-retryable error — throw immediately
+        }
       }
-
-      // Exponential backoff: 1s, 2s, 4s
-      const delay = Math.pow(2, attempt) * 1000;
-      console.log(`⏳ Rate limited. Retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})...`);
-      await new Promise((resolve) => setTimeout(resolve, delay));
     }
+    console.log(`⚠️ ${modelName} exhausted, trying next model...`);
   }
+
+  // All models and retries exhausted
+  throw lastError;
 }
 
 /**
@@ -77,38 +112,17 @@ exports.processCode = async (req, res) => {
       });
     }
 
-    // ── Build Prompt & Call Gemini (with retry) ──
+    // ── Build Prompt & Call Gemini ─────────────
     const prompt = generatePrompt(code, language, action);
-    const model = getGeminiModel();
+    const systemPrompt =
+      'You are CodeMentor AI, an expert programming assistant. ' +
+      'Provide clear, well-structured, and actionable responses. ' +
+      'Use markdown formatting with code blocks, headings, and bullet points. ' +
+      'Be thorough but concise.\n\n';
 
-    const result = await withRetry(async () => {
-      return await model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text:
-                  'You are CodeMentor AI, an expert programming assistant. ' +
-                  'Provide clear, well-structured, and actionable responses. ' +
-                  'Use markdown formatting with code blocks, headings, and bullet points. ' +
-                  'Be thorough but concise.\n\n' +
-                  prompt,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          maxOutputTokens: 2048,
-          temperature: 0.3,
-        },
-      });
-    });
-
-    const response = result.response.text();
+    const response = await callGemini(systemPrompt + prompt);
 
     // ── Persist Query to Database ─────────────
-    // Link query to the authenticated user (if logged in)
     const userId = req.user?.id || null;
     const query = await prisma.query.create({
       data: { code, language, action, response, userId },
@@ -121,21 +135,15 @@ exports.processCode = async (req, res) => {
   } catch (err) {
     console.error('AI processing error:', err);
 
-    // Handle specific Gemini errors
-    if (err.message?.includes('API key')) {
+    if (err.message?.includes('API key') || err.message?.includes('GEMINI_API_KEY')) {
       return res.status(500).json({
         error: 'AI service authentication failed. Check your GEMINI_API_KEY.',
       });
     }
 
-    if (
-      err.message?.includes('quota') ||
-      err.message?.includes('rate') ||
-      err.message?.includes('429') ||
-      err.message?.includes('Resource has been exhausted')
-    ) {
+    if (isRateLimitError(err)) {
       return res.status(429).json({
-        error: 'AI is temporarily busy. Please wait a few seconds and try again.',
+        error: 'AI is temporarily busy. Please wait 30 seconds and try again.',
       });
     }
 
