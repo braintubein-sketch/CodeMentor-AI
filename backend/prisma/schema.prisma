@@ -1,0 +1,37 @@
+// ============================================
+// CodeMentor AI — Prisma Schema
+// ============================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Registered user of CodeMentor AI
+model User {
+  id       String  @id @default(uuid())
+  email    String  @unique
+  password String
+  queries  Query[]
+
+  @@map("users")
+}
+
+/// A code-analysis query submitted by a user
+model Query {
+  id        String   @id @default(uuid())
+  code      String   @db.Text
+  language  String
+  action    String
+  response  String   @db.Text
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@map("queries")
+}
