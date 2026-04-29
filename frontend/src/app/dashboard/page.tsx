@@ -63,7 +63,12 @@ export default function DashboardPage() {
     }
   };
 
-  // Auth removed
+  /** Retry the last action */
+  const handleRetry = () => {
+    if (currentAction) {
+      handleAction(currentAction);
+    }
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950">
@@ -131,7 +136,7 @@ export default function DashboardPage() {
 
         {/* Right: AI Response — visible on desktop always, on mobile only when tab = response */}
         <div className={`flex-1 min-h-0 ${activeTab !== 'response' ? 'hidden lg:block' : ''}`} style={{ minHeight: '250px' }}>
-          <ResponsePanel response={response} loading={aiLoading} error={error} currentAction={currentAction} />
+          <ResponsePanel response={response} loading={aiLoading} error={error} currentAction={currentAction} onRetry={handleRetry} />
         </div>
       </div>
     </div>

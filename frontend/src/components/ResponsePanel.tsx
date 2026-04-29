@@ -31,9 +31,11 @@ interface ResponsePanelProps {
   error: string | null;
   /** The current action being performed (for dynamic loading text) */
   currentAction?: Action | null;
+  /** Callback to retry the last action */
+  onRetry?: () => void;
 }
 
-export default function ResponsePanel({ response, loading, error, currentAction }: ResponsePanelProps) {
+export default function ResponsePanel({ response, loading, error, currentAction, onRetry }: ResponsePanelProps) {
   const [copied, setCopied] = useState(false);
 
   /** Copy the full response to clipboard */
@@ -110,7 +112,17 @@ export default function ResponsePanel({ response, loading, error, currentAction 
             <div className="text-center p-6 rounded-2xl bg-red-500/5 border border-red-500/20 max-w-md">
               <div className="text-3xl mb-3">⚠️</div>
               <h3 className="text-lg font-semibold text-red-400 mb-2">Something went wrong</h3>
-              <p className="text-sm text-white/50">{error}</p>
+              <p className="text-sm text-white/50 mb-4">{error}</p>
+              {onRetry && (
+                <button
+                  onClick={onRetry}
+                  className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent-blue/15 text-accent-blue
+                             border border-accent-blue/25 hover:bg-accent-blue/25 hover:border-accent-blue/40
+                             transition-all duration-300"
+                >
+                  ↻ Try Again
+                </button>
+              )}
             </div>
           </div>
         )}

@@ -25,6 +25,36 @@ function getGeminiModel() {
 const VALID_ACTIONS = ['explain', 'debug', 'optimize', 'convert'];
 
 /**
+ * Retry a function with exponential backoff.
+ * Retries up to `maxRetries` times on rate-limit / transient errors.
+ */
+async function withRetry(fn, maxRetries = 3) {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      const isRateLimit =
+        err.message?.includes('429') ||
+        err.message?.includes('quota') ||
+        err.message?.includes('rate') ||
+        err.message?.includes('Resource has been exhausted') ||
+        err.status === 429;
+
+      const isLastAttempt = attempt === maxRetries;
+
+      if (!isRateLimit || isLastAttempt) {
+        throw err; // Not retryable or out of retries
+      }
+
+      // Exponential backoff: 1s, 2s, 4s
+      const delay = Math.pow(2, attempt) * 1000;
+      console.log(`⏳ Rate limited. Retrying in ${delay / 1000}s (attempt ${attempt + 1}/${maxRetries})...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+}
+
+/**
  * POST /api/ai
  * Process code with AI based on the selected action.
  *
@@ -47,30 +77,32 @@ exports.processCode = async (req, res) => {
       });
     }
 
-    // ── Build Prompt & Call Gemini ─────────────
+    // ── Build Prompt & Call Gemini (with retry) ──
     const prompt = generatePrompt(code, language, action);
     const model = getGeminiModel();
 
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text:
-                'You are CodeMentor AI, an expert programming assistant. ' +
-                'Provide clear, well-structured, and actionable responses. ' +
-                'Use markdown formatting with code blocks, headings, and bullet points. ' +
-                'Be thorough but concise.\n\n' +
-                prompt,
-            },
-          ],
+    const result = await withRetry(async () => {
+      return await model.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text:
+                  'You are CodeMentor AI, an expert programming assistant. ' +
+                  'Provide clear, well-structured, and actionable responses. ' +
+                  'Use markdown formatting with code blocks, headings, and bullet points. ' +
+                  'Be thorough but concise.\n\n' +
+                  prompt,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          maxOutputTokens: 2048,
+          temperature: 0.3,
         },
-      ],
-      generationConfig: {
-        maxOutputTokens: 2048,
-        temperature: 0.3,
-      },
+      });
     });
 
     const response = result.response.text();
@@ -96,9 +128,14 @@ exports.processCode = async (req, res) => {
       });
     }
 
-    if (err.message?.includes('quota') || err.message?.includes('rate')) {
+    if (
+      err.message?.includes('quota') ||
+      err.message?.includes('rate') ||
+      err.message?.includes('429') ||
+      err.message?.includes('Resource has been exhausted')
+    ) {
       return res.status(429).json({
-        error: 'API rate limit reached. Please try again in a moment.',
+        error: 'AI is temporarily busy. Please wait a few seconds and try again.',
       });
     }
 
