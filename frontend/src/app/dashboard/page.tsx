@@ -31,6 +31,7 @@ export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'response'>('editor');
+  const [currentAction, setCurrentAction] = useState<Action | null>(null);
 
   // No auth required
 
@@ -47,6 +48,7 @@ export default function DashboardPage() {
     setAiLoading(true);
     setError(null);
     setResponse(null);
+    setCurrentAction(action);
     setActiveTab('response'); // Auto-switch to response on mobile
     try {
       const data = await processCode(code, language, action);
@@ -129,7 +131,7 @@ export default function DashboardPage() {
 
         {/* Right: AI Response — visible on desktop always, on mobile only when tab = response */}
         <div className={`flex-1 min-h-0 ${activeTab !== 'response' ? 'hidden lg:block' : ''}`} style={{ minHeight: '250px' }}>
-          <ResponsePanel response={response} loading={aiLoading} error={error} />
+          <ResponsePanel response={response} loading={aiLoading} error={error} currentAction={currentAction} />
         </div>
       </div>
     </div>

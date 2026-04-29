@@ -12,6 +12,15 @@ import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { HiOutlineClipboardCopy, HiOutlineCheck } from 'react-icons/hi';
 import LoadingSpinner from './LoadingSpinner';
 import toast from 'react-hot-toast';
+import type { Action } from '@/types';
+
+/** Action-aware loading messages */
+const LOADING_MESSAGES: Record<Action, string> = {
+  explain: 'Explaining your code...',
+  debug: 'Detecting issues...',
+  optimize: 'Optimizing performance...',
+  convert: 'Converting code...',
+};
 
 interface ResponsePanelProps {
   /** The AI response text (markdown) */
@@ -20,9 +29,11 @@ interface ResponsePanelProps {
   loading: boolean;
   /** Error message, if any */
   error: string | null;
+  /** The current action being performed (for dynamic loading text) */
+  currentAction?: Action | null;
 }
 
-export default function ResponsePanel({ response, loading, error }: ResponsePanelProps) {
+export default function ResponsePanel({ response, loading, error, currentAction }: ResponsePanelProps) {
   const [copied, setCopied] = useState(false);
 
   /** Copy the full response to clipboard */
@@ -77,7 +88,10 @@ export default function ResponsePanel({ response, loading, error }: ResponsePane
         {/* Loading state */}
         {loading && (
           <div className="flex flex-col items-center justify-center h-full gap-4">
-            <LoadingSpinner size="lg" text="Analyzing your code..." />
+            <LoadingSpinner
+              size="lg"
+              text={currentAction ? LOADING_MESSAGES[currentAction] : 'Analyzing your code...'}
+            />
             <div className="flex gap-1">
               {[0, 1, 2].map((i) => (
                 <div
