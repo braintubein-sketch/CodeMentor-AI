@@ -5,7 +5,7 @@
 import axios from 'axios';
 import type { AuthResponse, AIResponse, HistoryResponse, Action, Language } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://codementor-ai-few5.onrender.com';
 
 /**
  * Axios instance pre-configured with the backend base URL.
