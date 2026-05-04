@@ -26,6 +26,7 @@ export default function DashboardPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'response'>('editor');
   const [currentAction, setCurrentAction] = useState<Action | null>(null);
+  const [provider, setProvider] = useState<string | null>(null);
 
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang);
@@ -40,11 +41,13 @@ export default function DashboardPage() {
     setAiLoading(true);
     setError(null);
     setResponse(null);
+    setProvider(null);
     setCurrentAction(action);
     setActiveTab('response');
     try {
       const data = await processCode(code, language, action);
       setResponse(data.response);
+      setProvider(data.provider || null);
       toast.success('Analysis complete!');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to process code. Please try again.';
@@ -186,6 +189,7 @@ export default function DashboardPage() {
                 error={error}
                 currentAction={currentAction}
                 onRetry={handleRetry}
+                provider={provider}
               />
             </div>
           </div>

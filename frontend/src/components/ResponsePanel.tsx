@@ -35,9 +35,10 @@ interface ResponsePanelProps {
   error: string | null;
   currentAction?: Action | null;
   onRetry?: () => void;
+  provider?: string | null;
 }
 
-export default function ResponsePanel({ response, loading, error, currentAction, onRetry }: ResponsePanelProps) {
+export default function ResponsePanel({ response, loading, error, currentAction, onRetry, provider }: ResponsePanelProps) {
   const [copied, setCopied] = useState(false);
   const [tipIndex] = useState(Math.floor(Math.random() * LOADING_TIPS.length));
 
@@ -78,25 +79,32 @@ export default function ResponsePanel({ response, loading, error, currentAction,
         </div>
 
         {response && (
-          <button
-            onClick={handleCopy}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
-                       text-white/50 hover:text-white hover:bg-white/5 border border-white/10
-                       hover:border-white/20 transition-all duration-300 active:scale-95"
-            title="Copy response"
-          >
-            {copied ? (
-              <>
-                <HiOutlineCheck className="w-3.5 h-3.5 text-green-400" />
-                <span className="text-green-400">Copied</span>
-              </>
-            ) : (
-              <>
-                <HiOutlineClipboardCopy className="w-3.5 h-3.5" />
-                <span>Copy</span>
-              </>
+          <div className="flex items-center gap-2">
+            {provider && (
+              <span className="px-2 py-0.5 rounded-md text-[10px] font-mono bg-accent-blue/10 text-accent-blue/70 border border-accent-blue/15">
+                ⚡ {provider}
+              </span>
             )}
-          </button>
+            <button
+              onClick={handleCopy}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
+                         text-white/50 hover:text-white hover:bg-white/5 border border-white/10
+                         hover:border-white/20 transition-all duration-300 active:scale-95"
+              title="Copy response"
+            >
+              {copied ? (
+                <>
+                  <HiOutlineCheck className="w-3.5 h-3.5 text-green-400" />
+                  <span className="text-green-400">Copied</span>
+                </>
+              ) : (
+                <>
+                  <HiOutlineClipboardCopy className="w-3.5 h-3.5" />
+                  <span>Copy</span>
+                </>
+              )}
+            </button>
+          </div>
         )}
       </div>
 

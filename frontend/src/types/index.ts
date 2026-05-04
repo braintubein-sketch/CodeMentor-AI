@@ -45,6 +45,7 @@ export interface HistoryResponse {
 export interface AIResponse {
   response: string;
   queryId: string;
+  provider?: string;
 }
 
 /** API error shape */
