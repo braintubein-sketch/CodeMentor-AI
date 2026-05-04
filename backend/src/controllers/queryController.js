@@ -8,18 +8,23 @@ const prisma = new PrismaClient();
 
 /**
  * GET /api/query/history
- * Retrieve the authenticated user's query history (most recent first).
+ * Retrieve query history.
+ * - Authenticated users see their own queries.
+ * - Guests see all queries without a userId (anonymous queries).
  */
 exports.getHistory = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user?.id || null;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
+    // Filter: logged-in users see their queries, guests see anonymous queries
+    const where = userId ? { userId } : { userId: null };
+
     const [queries, total] = await Promise.all([
       prisma.query.findMany({
-        where: { userId },
+        where,
         orderBy: { createdAt: 'desc' },
         skip,
         take: limit,
@@ -32,7 +37,7 @@ exports.getHistory = async (req, res) => {
           createdAt: true,
         },
       }),
-      prisma.query.count({ where: { userId } }),
+      prisma.query.count({ where }),
     ]);
 
     res.json({
@@ -41,7 +46,7 @@ exports.getHistory = async (req, res) => {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 1,
       },
     });
   } catch (err) {
@@ -52,16 +57,17 @@ exports.getHistory = async (req, res) => {
 
 /**
  * GET /api/query/:id
- * Retrieve a single query by ID (must belong to the authenticated user).
+ * Retrieve a single query by ID.
  */
 exports.getQuery = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id || null;
 
-    const query = await prisma.query.findFirst({
-      where: { id, userId },
-    });
+    // If logged in, only show their queries; if guest, only show anonymous queries
+    const where = userId ? { id, userId } : { id, userId: null };
+
+    const query = await prisma.query.findFirst({ where });
 
     if (!query) {
       return res.status(404).json({ error: 'Query not found.' });
@@ -76,14 +82,16 @@ exports.getQuery = async (req, res) => {
 
 /**
  * DELETE /api/query/:id
- * Delete a single query by ID (must belong to the authenticated user).
+ * Delete a single query by ID.
  */
 exports.deleteQuery = async (req, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user.id;
+    const userId = req.user?.id || null;
 
-    const query = await prisma.query.findFirst({ where: { id, userId } });
+    const where = userId ? { id, userId } : { id, userId: null };
+    const query = await prisma.query.findFirst({ where });
+
     if (!query) {
       return res.status(404).json({ error: 'Query not found or access denied.' });
     }

@@ -5,11 +5,11 @@
 const express = require('express');
 const router = express.Router();
 const { getHistory, getQuery, deleteQuery } = require('../controllers/queryController');
-const authenticate = require('../middleware/auth');
+const { optionalAuth } = require('../middleware/auth');
 
-// All query routes require authentication
-router.get('/history', authenticate, getHistory);
-router.get('/:id', authenticate, getQuery);
-router.delete('/:id', authenticate, deleteQuery);
+// Query routes use optional auth — guests see global queries, users see their own
+router.get('/history', optionalAuth, getHistory);
+router.get('/:id', optionalAuth, getQuery);
+router.delete('/:id', optionalAuth, deleteQuery);
 
 module.exports = router;

@@ -17,6 +17,7 @@ const PORT = process.env.PORT || 5000;
 // ── CORS ─────────────────────────────────────
 const allowedOrigins = [
   (process.env.FRONTEND_URL || '').replace(/\/$/, ''), // strip trailing slash
+  'https://code-mentor-ai-lemon.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
 ].filter(Boolean);
@@ -29,6 +30,10 @@ app.use(
       // Normalize by stripping trailing slash from the incoming origin too
       const normalized = origin.replace(/\/$/, '');
       if (allowedOrigins.includes(normalized)) {
+        return callback(null, true);
+      }
+      // Allow any Vercel preview deployment
+      if (/\.vercel\.app$/.test(normalized)) {
         return callback(null, true);
       }
       return callback(new Error(`CORS: Origin ${origin} not allowed`));
