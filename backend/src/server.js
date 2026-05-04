@@ -23,6 +23,22 @@ app.use('/api/auth', authRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/query', queryRoutes);
 
+// ── Root Route ───────────────────────────────
+app.get('/', (_req, res) => {
+  res.json({
+    name: 'CodeMentor AI API',
+    version: '1.0.0',
+    status: 'running',
+    endpoints: {
+      auth: '/api/auth',
+      ai: '/api/ai',
+      query: '/api/query',
+      health: '/api/health',
+    },
+    timestamp: new Date().toISOString(),
+  });
+});
+
 // ── Health Check ─────────────────────────────
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
