@@ -1,12 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import CodeEditor from '@/components/CodeEditor';
 import ResponsePanel from '@/components/ResponsePanel';
-import LoadingSpinner from '@/components/LoadingSpinner';
 import { processCode } from '@/lib/api';
 import { LANGUAGES, ACTIONS } from '@/types';
 import type { Language, Action } from '@/types';
@@ -21,9 +18,6 @@ const DEFAULT_CODE: Record<Language, string> = {
 };
 
 export default function DashboardPage() {
-  const { isAuthenticated, loading: authLoading } = useAuth();
-  const router = useRouter();
-
   const [language, setLanguage] = useState<Language>('python');
   const [code, setCode] = useState(DEFAULT_CODE.python);
   const [response, setResponse] = useState<string | null>(null);
@@ -32,8 +26,6 @@ export default function DashboardPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'editor' | 'response'>('editor');
   const [currentAction, setCurrentAction] = useState<Action | null>(null);
-
-  // No auth required
 
   const handleLanguageChange = (lang: Language) => {
     setLanguage(lang);
@@ -49,13 +41,13 @@ export default function DashboardPage() {
     setError(null);
     setResponse(null);
     setCurrentAction(action);
-    setActiveTab('response'); // Auto-switch to response on mobile
+    setActiveTab('response');
     try {
       const data = await processCode(code, language, action);
       setResponse(data.response);
       toast.success('Analysis complete!');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to process code.';
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error || 'Failed to process code. Please try again.';
       setError(msg);
       toast.error(msg);
     } finally {
@@ -63,80 +55,140 @@ export default function DashboardPage() {
     }
   };
 
-  /** Retry the last action */
   const handleRetry = () => {
-    if (currentAction) {
-      handleAction(currentAction);
-    }
+    if (currentAction) handleAction(currentAction);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-dark-950">
       <Navbar />
 
-      {/* Toolbar */}
-      <div className="border-b border-white/5 bg-dark-950/80 backdrop-blur-sm sticky top-16 z-40">
-        <div className="max-w-[1800px] mx-auto px-3 sm:px-4 py-2.5 sm:py-3">
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            {/* Language dropdown */}
-            <div className="relative">
-              <button onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl bg-dark-800 border border-white/10 hover:border-white/20 text-xs sm:text-sm font-medium text-white/80 transition-all min-w-[110px] sm:min-w-[140px]">
-                <span>{LANGUAGES.find(l => l.value === language)?.label}</span>
-                <HiOutlineChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 ml-auto transition-transform ${dropdownOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {dropdownOpen && (
-                <div className="absolute top-full mt-1 w-full rounded-xl shadow-2xl overflow-hidden z-50 animate-slide-down bg-dark-900 border border-white/15">
-                  {LANGUAGES.map(lang => (
-                    <button key={lang.value} onClick={() => handleLanguageChange(lang.value)}
-                      className={`w-full text-left px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm font-medium transition-all ${language === lang.value ? 'bg-accent-blue/20 text-accent-blue' : 'text-white/70 hover:bg-white/10 hover:text-white'}`}>
-                      {lang.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+      {/* ── Main Content Area ── */}
+      <div className="flex-1 flex flex-col max-w-[1920px] mx-auto w-full">
 
-            <div className="h-5 sm:h-6 w-px bg-white/10" />
-
-            {/* Action buttons */}
-            <div className="flex gap-1.5 sm:gap-2">
-              {ACTIONS.map(action => (
-                <button key={action.value} onClick={() => handleAction(action.value)} disabled={aiLoading}
-                  className="flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 disabled:opacity-40 disabled:cursor-not-allowed border border-white/10 hover:border-white/20 bg-dark-800 hover:bg-dark-700 text-white/80 hover:text-white group whitespace-nowrap">
-                  <span className="text-sm sm:text-base group-hover:scale-110 transition-transform">{action.icon}</span>
-                  <span className="hidden xs:inline sm:inline">{action.label}</span>
+        {/* ── Action Bar ── */}
+        <div className="border-b border-white/5 bg-dark-950/90 backdrop-blur-md sticky top-16 z-40">
+          <div className="px-4 sm:px-6 lg:px-8 py-3">
+            <div className="flex items-center gap-3 flex-wrap">
+              {/* Language Selector */}
+              <div className="relative">
+                <button
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
+                  className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-dark-800/80 border border-white/10
+                             hover:border-accent-blue/30 text-sm font-medium text-white/80
+                             transition-all duration-300 min-w-[130px] group"
+                >
+                  <div className="w-2 h-2 rounded-full bg-accent-cyan animate-pulse" />
+                  <span>{LANGUAGES.find(l => l.value === language)?.label}</span>
+                  <HiOutlineChevronDown className={`w-4 h-4 ml-auto text-white/40 group-hover:text-white/60 transition-transform duration-300 ${dropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-              ))}
+                {dropdownOpen && (
+                  <>
+                    <div className="fixed inset-0 z-40" onClick={() => setDropdownOpen(false)} />
+                    <div className="absolute top-full mt-2 w-full rounded-xl shadow-2xl overflow-hidden z-50 animate-slide-down bg-dark-900/95 backdrop-blur-xl border border-white/15">
+                      {LANGUAGES.map(lang => (
+                        <button
+                          key={lang.value}
+                          onClick={() => handleLanguageChange(lang.value)}
+                          className={`w-full text-left px-4 py-3 text-sm font-medium transition-all duration-200
+                            ${language === lang.value
+                              ? 'bg-accent-blue/15 text-accent-blue'
+                              : 'text-white/70 hover:bg-white/5 hover:text-white'
+                            }`}
+                        >
+                          {lang.label}
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              <div className="h-6 w-px bg-white/10 hidden sm:block" />
+
+              {/* Action Buttons */}
+              <div className="flex gap-2 flex-wrap">
+                {ACTIONS.map(action => (
+                  <button
+                    key={action.value}
+                    onClick={() => handleAction(action.value)}
+                    disabled={aiLoading}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold
+                               transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed
+                               border group whitespace-nowrap
+                               ${currentAction === action.value && aiLoading
+                                 ? `bg-gradient-to-r ${action.gradient} text-white border-transparent shadow-lg shadow-accent-blue/20`
+                                 : 'border-white/10 hover:border-white/20 bg-dark-800/60 hover:bg-dark-700/80 text-white/80 hover:text-white'
+                               }`}
+                  >
+                    <span className="text-base group-hover:scale-110 transition-transform duration-200">{action.icon}</span>
+                    <span className="hidden xs:inline sm:inline">{action.label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Mobile tab switcher (visible only on small screens) */}
-      <div className="lg:hidden flex border-b border-white/5">
-        <button
-          onClick={() => setActiveTab('editor')}
-          className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-wider text-center transition-all ${activeTab === 'editor' ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5' : 'text-white/40'}`}>
-          📝 Code Editor
-        </button>
-        <button
-          onClick={() => setActiveTab('response')}
-          className={`flex-1 py-2.5 text-xs font-semibold uppercase tracking-wider text-center transition-all ${activeTab === 'response' ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5' : 'text-white/40'}`}>
-          🤖 AI Response
-        </button>
-      </div>
-
-      {/* Main split layout */}
-      <div className="flex-1 flex flex-col lg:flex-row gap-0 lg:gap-1 p-1.5 sm:p-2 lg:p-3 max-w-[1800px] mx-auto w-full" style={{ height: 'calc(100vh - 10rem)' }}>
-        {/* Left: Code Editor — visible on desktop always, on mobile only when tab = editor */}
-        <div className={`flex-1 min-h-0 ${activeTab !== 'editor' ? 'hidden lg:block' : ''}`} style={{ minHeight: '250px' }}>
-          <CodeEditor code={code} onChange={setCode} language={language} />
+        {/* ── Mobile Tab Switcher ── */}
+        <div className="lg:hidden flex border-b border-white/5 bg-dark-950/80">
+          <button
+            onClick={() => setActiveTab('editor')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest text-center transition-all duration-300
+              ${activeTab === 'editor'
+                ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5'
+                : 'text-white/30 hover:text-white/50'
+              }`}
+          >
+            📝 Editor
+          </button>
+          <button
+            onClick={() => setActiveTab('response')}
+            className={`flex-1 py-3 text-xs font-bold uppercase tracking-widest text-center transition-all duration-300 relative
+              ${activeTab === 'response'
+                ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5'
+                : 'text-white/30 hover:text-white/50'
+              }`}
+          >
+            🤖 Response
+            {response && !aiLoading && (
+              <span className="absolute top-2 right-[calc(50%-40px)] w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+            )}
+          </button>
         </div>
 
-        {/* Right: AI Response — visible on desktop always, on mobile only when tab = response */}
-        <div className={`flex-1 min-h-0 ${activeTab !== 'response' ? 'hidden lg:block' : ''}`} style={{ minHeight: '250px' }}>
-          <ResponsePanel response={response} loading={aiLoading} error={error} currentAction={currentAction} onRetry={handleRetry} />
+        {/* ── Split Panel Layout ── */}
+        <div className="flex-1 flex flex-col lg:flex-row min-h-0" style={{ height: 'calc(100vh - 8.5rem)' }}>
+          {/* Left Panel: Code Editor */}
+          <div
+            className={`lg:w-1/2 flex flex-col min-h-0 ${activeTab !== 'editor' ? 'hidden lg:flex' : 'flex'}`}
+            style={{ minHeight: '300px' }}
+          >
+            <div className="flex-1 p-2 sm:p-3 lg:pr-1.5">
+              <CodeEditor code={code} onChange={setCode} language={language} />
+            </div>
+          </div>
+
+          {/* Center Divider (desktop only) */}
+          <div className="hidden lg:flex items-center justify-center w-2">
+            <div className="w-px h-[60%] bg-gradient-to-b from-transparent via-accent-blue/30 to-transparent" />
+          </div>
+
+          {/* Right Panel: AI Response */}
+          <div
+            className={`lg:w-1/2 flex flex-col min-h-0 ${activeTab !== 'response' ? 'hidden lg:flex' : 'flex'}`}
+            style={{ minHeight: '300px' }}
+          >
+            <div className="flex-1 p-2 sm:p-3 lg:pl-1.5">
+              <ResponsePanel
+                response={response}
+                loading={aiLoading}
+                error={error}
+                currentAction={currentAction}
+                onRetry={handleRetry}
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>

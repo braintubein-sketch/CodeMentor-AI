@@ -1,7 +1,7 @@
 'use client';
 
 // ============================================
-// CodeMentor AI — AI Response Panel
+// CodeMentor AI — AI Response Panel (Premium)
 // ============================================
 
 import React, { useState } from 'react';
@@ -17,28 +17,30 @@ import type { Action } from '@/types';
 /** Action-aware loading messages */
 const LOADING_MESSAGES: Record<Action, string> = {
   explain: 'Explaining your code...',
-  debug: 'Detecting issues...',
+  debug: 'Scanning for bugs...',
   optimize: 'Optimizing performance...',
   convert: 'Converting code...',
 };
 
+const LOADING_TIPS: string[] = [
+  'AI is analyzing your code structure...',
+  'Checking for patterns and best practices...',
+  'This may take 10-30 seconds...',
+  'Using Gemini AI for deep analysis...',
+];
+
 interface ResponsePanelProps {
-  /** The AI response text (markdown) */
   response: string | null;
-  /** Whether the response is still loading */
   loading: boolean;
-  /** Error message, if any */
   error: string | null;
-  /** The current action being performed (for dynamic loading text) */
   currentAction?: Action | null;
-  /** Callback to retry the last action */
   onRetry?: () => void;
 }
 
 export default function ResponsePanel({ response, loading, error, currentAction, onRetry }: ResponsePanelProps) {
   const [copied, setCopied] = useState(false);
+  const [tipIndex] = useState(Math.floor(Math.random() * LOADING_TIPS.length));
 
-  /** Copy the full response to clipboard */
   const handleCopy = async () => {
     if (!response) return;
     try {
@@ -52,14 +54,27 @@ export default function ResponsePanel({ response, loading, error, currentAction,
   };
 
   return (
-    <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-dark-950/80">
+    <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-white/10 bg-dark-950/80 backdrop-blur-sm">
       {/* Panel header */}
       <div className="flex items-center justify-between px-4 py-2.5 bg-dark-900/80 border-b border-white/5">
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-accent-blue animate-pulse" />
+        <div className="flex items-center gap-2.5">
+          <div className={`w-2 h-2 rounded-full transition-colors duration-500 ${
+            loading ? 'bg-yellow-400 animate-pulse' :
+            response ? 'bg-green-400' :
+            error ? 'bg-red-400' :
+            'bg-accent-blue/50'
+          }`} />
           <span className="text-xs text-white/40 font-medium uppercase tracking-wider">
-            AI Response
+            {loading ? 'Processing...' :
+             response ? 'AI Response' :
+             error ? 'Error' :
+             'AI Response'}
           </span>
+          {currentAction && loading && (
+            <span className="text-[10px] text-accent-blue/60 font-mono">
+              ({currentAction})
+            </span>
+          )}
         </div>
 
         {response && (
@@ -67,7 +82,7 @@ export default function ResponsePanel({ response, loading, error, currentAction,
             onClick={handleCopy}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium
                        text-white/50 hover:text-white hover:bg-white/5 border border-white/10
-                       hover:border-white/20 transition-all duration-300"
+                       hover:border-white/20 transition-all duration-300 active:scale-95"
             title="Copy response"
           >
             {copied ? (
@@ -89,16 +104,26 @@ export default function ResponsePanel({ response, loading, error, currentAction,
       <div className="flex-1 overflow-y-auto p-5">
         {/* Loading state */}
         {loading && (
-          <div className="flex flex-col items-center justify-center h-full gap-4">
-            <LoadingSpinner
-              size="lg"
-              text={currentAction ? LOADING_MESSAGES[currentAction] : 'Analyzing your code...'}
-            />
-            <div className="flex gap-1">
+          <div className="flex flex-col items-center justify-center h-full gap-5">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-blue/20 to-accent-purple/20 flex items-center justify-center border border-white/10">
+                <LoadingSpinner size="lg" />
+              </div>
+              <div className="absolute -inset-2 rounded-3xl bg-accent-blue/5 animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-white/70 mb-1.5">
+                {currentAction ? LOADING_MESSAGES[currentAction] : 'Analyzing your code...'}
+              </p>
+              <p className="text-xs text-white/30">
+                {LOADING_TIPS[tipIndex]}
+              </p>
+            </div>
+            <div className="flex gap-1.5">
               {[0, 1, 2].map((i) => (
                 <div
                   key={i}
-                  className="w-2 h-2 rounded-full bg-accent-blue animate-bounce"
+                  className="w-2 h-2 rounded-full bg-accent-blue/60 animate-bounce"
                   style={{ animationDelay: `${i * 0.15}s` }}
                 />
               ))}
@@ -109,16 +134,18 @@ export default function ResponsePanel({ response, loading, error, currentAction,
         {/* Error state */}
         {error && !loading && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center p-6 rounded-2xl bg-red-500/5 border border-red-500/20 max-w-md">
-              <div className="text-3xl mb-3">⚠️</div>
-              <h3 className="text-lg font-semibold text-red-400 mb-2">Something went wrong</h3>
-              <p className="text-sm text-white/50 mb-4">{error}</p>
+            <div className="text-center p-8 rounded-2xl bg-red-500/5 border border-red-500/15 max-w-md">
+              <div className="w-14 h-14 mx-auto mb-4 rounded-2xl bg-red-500/10 flex items-center justify-center border border-red-500/20">
+                <span className="text-2xl">⚠️</span>
+              </div>
+              <h3 className="text-lg font-bold text-red-400 mb-2">Something went wrong</h3>
+              <p className="text-sm text-white/40 mb-5 leading-relaxed">{error}</p>
               {onRetry && (
                 <button
                   onClick={onRetry}
-                  className="px-5 py-2.5 rounded-xl text-sm font-medium bg-accent-blue/15 text-accent-blue
-                             border border-accent-blue/25 hover:bg-accent-blue/25 hover:border-accent-blue/40
-                             transition-all duration-300"
+                  className="px-6 py-2.5 rounded-xl text-sm font-semibold bg-gradient-to-r from-red-500/20 to-orange-500/20
+                             text-red-300 border border-red-500/25 hover:border-red-500/40
+                             hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300 active:scale-95"
                 >
                   ↻ Try Again
                 </button>
@@ -130,13 +157,26 @@ export default function ResponsePanel({ response, loading, error, currentAction,
         {/* Empty state */}
         {!response && !loading && !error && (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-6xl mb-4 animate-float">🤖</div>
-            <h3 className="text-lg font-semibold text-white/70 mb-2">
-              Ready to analyze your code
+            <div className="relative mb-6">
+              <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-accent-blue/10 to-accent-purple/10 flex items-center justify-center border border-white/5">
+                <span className="text-4xl animate-float">🤖</span>
+              </div>
+              <div className="absolute -inset-3 rounded-[28px] border border-dashed border-white/5" />
+            </div>
+            <h3 className="text-lg font-bold text-white/70 mb-2">
+              Ready to analyze
             </h3>
-            <p className="text-sm text-white/40 max-w-xs leading-relaxed">
-              Paste your code in the editor, select an action, and let AI do the rest.
+            <p className="text-sm text-white/30 max-w-xs leading-relaxed mb-6">
+              Paste your code in the editor, pick an action, and let AI do the heavy lifting.
             </p>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {['Explain', 'Debug', 'Optimize', 'Convert'].map((action, i) => (
+                <span key={action} className="px-3 py-1 rounded-lg text-[10px] font-medium uppercase tracking-wider
+                  bg-dark-800/80 text-white/20 border border-white/5">
+                  {['💡', '🐛', '⚡', '🔄'][i]} {action}
+                </span>
+              ))}
+            </div>
           </div>
         )}
 
@@ -146,7 +186,6 @@ export default function ResponsePanel({ response, loading, error, currentAction,
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={{
-                /* Custom code block rendering with syntax highlighting */
                 code({ className, children, ...props }) {
                   const match = /language-(\w+)/.exec(className || '');
                   const codeString = String(children).replace(/\n$/, '');
@@ -170,6 +209,7 @@ export default function ResponsePanel({ response, loading, error, currentAction,
                             background: '#0d1117',
                             padding: '1.25rem',
                             fontSize: '13px',
+                            border: '1px solid rgba(255,255,255,0.06)',
                           }}
                         >
                           {codeString}
@@ -178,7 +218,6 @@ export default function ResponsePanel({ response, loading, error, currentAction,
                     );
                   }
 
-                  // Inline code
                   return (
                     <code className={className} {...props}>
                       {children}
