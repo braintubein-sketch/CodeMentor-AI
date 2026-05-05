@@ -14,8 +14,15 @@ const queryRoutes = require('./routes/query');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// ── CORS — allow all origins (public API, auth handled by JWT) ───
-app.use(cors());
+// ── CORS Configuration ───────────────────────
+const corsOptions = {
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true,
+};
+app.use(cors(corsOptions));
+
 app.use(express.json({ limit: '10mb' }));
 
 // ── API Routes ───────────────────────────────

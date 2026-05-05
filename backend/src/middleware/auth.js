@@ -18,7 +18,7 @@ const authenticate = (req, res, next) => {
   const token = authHeader.slice(7); // Remove "Bearer "
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-change-me');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     // Normalize: JWT payload has 'userId', expose as both 'id' and 'userId' for compatibility
     req.user = {
       id: decoded.userId,
@@ -50,7 +50,7 @@ const optionalAuth = (req, res, next) => {
   const token = authHeader.slice(7);
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret-change-me');
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = {
       id: decoded.userId,
       userId: decoded.userId,
